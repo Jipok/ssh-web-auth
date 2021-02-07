@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Authentication required</title>
+    </head>
+    <body>
+        <p>To gain access, you must execute:</p>
+        <code>ssh <span id="hostname"></span> -p 2222 <span id="token"></span></code>
+
+        <script>
+            function setCookie(name,value,days) {
+                var expires = "";
+                if (days) {
+                    var date = new Date();
+                    date.setTime(date.getTime() + (days*24*60*60*1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+            }
+
+            function getCookie(name) {
+                var nameEQ = name + "=";
+                var ca = document.cookie.split(';');
+                for(var i=0;i < ca.length;i++) {
+                    var c = ca[i];
+                    while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+                }
+                return "";
+            }
+
+            var host = window.location.hostname
+            var port = window.location.port;
+            document.getElementById('hostname').innerText = host;
+
+            var token = getCookie("ssh_auth_token");
+            if (token == "") {
+                var array = new Uint32Array(30);
+                var long = ""
+                window.crypto.getRandomValues(array);
+                for (let i = 0; i < 30; i++) {
+                    long += array[i].toString(36)
+                }
+                for (let i = 0; i < 24; i++) {
+                    if (i % 5 == 4) {
+                        token += '-'
+                    } else {token += long[i]}
+                }
+                setCookie("ssh_auth_token", token, 7); // expires in week
+            }
+
+            document.getElementById('token').innerText = token;
+
+            setInterval(function(){ 
+                fetch(window.location.href)
+                .then(x => x.text())
+                .then(y => {
+                    if (!y.includes("f#PV:$!DWEFG$>>S<GS>V?Es!")) {
+                        window.location.reload(true);
+                    }
+                }).catch(function(){window.location.reload(true);});
+            }, 1000);
+        </script>
+    </body>
+</html>
